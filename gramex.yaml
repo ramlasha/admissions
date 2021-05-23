@@ -1,0 +1,85 @@
+url:
+  admission-home:
+    pattern: /$YAMLURL/
+    handler: FileHandler
+    kwargs:
+      path: $YAMLPATH/index.html
+      auth:
+        login_url: /$YAMLURL/login/
+      template: true
+      headers:
+        Cache-Control: private, max-age=1
+    cache:
+      expiry:
+        duration: 1
+  admission-login:
+    pattern: /$YAMLURL/login/
+    handler: SimpleAuth
+    kwargs:
+      template: $YAMLPATH/login.html
+      credentials:
+        alpha: alpha
+        beta: beta
+  admission-logout:
+    pattern: /$YAMLURL/logout/
+    handler: LogoutHandler
+  5c74c592-d155-42b4-bf2e-835153dfb520:
+    handler: MLHandler
+    kwargs:
+      config_dir: $YAMLPATH
+      data:
+        url: $YAMLPATH/uploads/admission (3).csv
+      model:
+        cats:
+        - Research
+        class: LogisticRegression
+        config_dir: $YAMLPATH
+        deduplicate: true
+        dropna: true
+        exclude:
+        - Name
+        nums:
+        - GREScore
+        - TOEFLScore
+        - UniversityRating
+        - SOP
+        - LOR
+        - CGPA
+        path: $YAMLPATH/model.pkl
+        target_col: Admitted
+      template: $YAMLPATH/mlhandler-template.html
+      xsrf_cookies: false
+    pattern: /$YAMLURL/predict
+test:
+  auth:
+    user: alpha
+    password: alpha
+import:
+  deploy if socket.gethostname() in {'YOUR-PROD-SERVER-NAME'}: $GRAMEXPATH/deploy.yaml
+  ui:
+    path: $GRAMEXAPPS/ui/gramex.yaml
+    YAMLURL: $YAMLURL/ui/
+  admin:
+    path: $GRAMEXAPPS/admin2/gramex.yaml
+    YAMLURL: /$YAMLURL/admin/
+    ADMIN_KWARGS:
+      logo: https://gramener.com/uistatic/gramener.png
+      home: /$YAMLURL/
+      title: Admin
+      theme: ?body-bg=white&navbar-dark-color=rgba(255%2C255%2C255%2C.8)&navbar-dark-hover-color=white
+    ADMIN_AUTH:
+      membership:
+        hd: gramener.com
+handlers:
+  BaseHandler:
+    error:
+      400:
+        path: $YAMLPATH/error/400.html
+      401:
+        path: $YAMLPATH/error/401.html
+      403:
+        path: $YAMLPATH/error/403.html
+      404:
+        path: $YAMLPATH/error/404.html
+      500:
+        path: $YAMLPATH/error/500.html
